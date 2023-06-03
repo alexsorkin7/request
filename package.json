@@ -1,0 +1,78 @@
+{
+  "name": "als-request",
+  "version": "1.0.0-beta.1",
+  "description": "versatile HTTP client offering enhanced features for Node.js with functionality for speed limitation with events, CORS management, stream support, automatic data preparation, error and response handling, and more",
+  "main": "index.js",
+  "engines": {
+    "node": ">=12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexsorkin7/request.git"
+  },
+  "scripts": {
+    "request": "node ./tests/integrative/request.js",
+    "dl": "node ./tests/integrative/dl.js",
+    "server": "node ./tests/integrative/server/server.js -run",
+    "is-valid-url": "node ./tests/unit-tests/is-valid-url.js",
+    "mime": "node ./tests/unit-tests/mime.js",
+    "req-data": "node ./tests/unit-tests/req-data.js",
+    "size": "node ./tests/unit-tests/size.js",
+    "with-credentials": "node ./tests/unit-tests/with-credentials.js",
+    "prepare-request": "node ./tests/unit-tests/prepare-request.js",
+    "download-limiter": "node ./tests/unit-tests/download-limiter.js"
+  },
+  "keywords": [
+    "http",
+    "https",
+    "http-client",
+    "nodejs-http",
+    "request",
+    "http-request",
+    "response",
+    "http-response",
+    "download-manager",
+    "networking",
+    "web",
+    "internet",
+    "headers",
+    "http-headers",
+    "credentials",
+    "CORS",
+    "content-type",
+    "http-requests",
+    "nodejs-networking",
+    "javascript",
+    "javascript-library",
+    "network-requests",
+    "custom-headers",
+    "download-speed-limit",
+    "http-error-handling",
+    "streaming",
+    "http-streaming",
+    "modular-http-client",
+    "axios",
+    "axios-alternative",
+    "http-client-like-axios",
+    "node-fetch",
+    "request-promise",
+    "superagent",
+    "got"
+  ],
+  "author": {
+    "name": "Alex Sorkin",
+    "email": "alexsorkin1980@gmail.com"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "follow-redirects": "^1.15.2",
+    "form-data": "^4.0.0",
+    "mime-types": "^2.1.35"
+  },
+  "devDependencies": {
+    "als-simple-test": "^0.3.5",
+    "busboy": "^1.6.0",
+    "express": "^4.18.2",
+    "querystring": "^0.2.1"
+  }
+}
