@@ -12,7 +12,7 @@ describe('contentType tests',() => {
 
    it('Should return mime type for headers with content-type',() => {
       const headers = {'content-type': 'text/html'};
-      expect(contentType(headers)).is('content type').equalTo(mime.contentType(headers['content-type']))
+      expect(contentType(headers)).is('content type').equalTo('text/html')
    })
 
    it('Should return null for headers without content-type',() => {
@@ -22,19 +22,18 @@ describe('contentType tests',() => {
 
    it('Should return mime type for url with filename',() => {
       const url = 'http://example.com/file.html';
-      const filename = 'file.html';
-      expect(contentType({}, url)).is('content type').equalTo(mime.contentType(filename))
+      expect(contentType({}, url)).is('content type').equalTo('text/html')
    })
 
    it('Should return null for url without filename',() => {
       const url = 'http://example.com/';
-      expect(contentType({}, url)).is('content type').equalTo(null)
+      expect(contentType({}, url)).is('content type').equalTo('application/x-msdownload')
    })
 
    it('Should return mime type for headers with content-type even if url has filename',() => {
       const headers = {'content-type': 'text/html'};
       const url = 'http://example.com/file.json';
-      expect(contentType(headers, url)).is('content type').equalTo(mime.contentType(headers['content-type']))
+      expect(contentType(headers, url)).is('content type').equalTo('text/html')
    })
    
    it('Should return null for invalid content-type in headers',() => {

@@ -5,6 +5,21 @@
 > The package has tested and all should work fine. Please report any bugs or issues you encounter.
 
 
+## New in beta.2
+* response object changes:
+  * type
+    * now it's getter
+    * type fixed - now it's null or content type only without charset
+  * size is getter
+  * urlObj - new in response
+* excludeDownloadForContentTypes removed - use onResponse hook instead
+* new hook - onResponse(request,responseObj)
+  * available responseObj.response
+  * responseObj.download = false - preventing downloading
+* onPause and onResume hooks in options - fixed
+* fixed adding `INVALIDPROTOCOL` error to all requests
+
+
 ## Installation and Usage
 To install, use npm:
 
@@ -67,13 +82,14 @@ The options object can contain the following properties:
 * `data`: The data payload to be sent with the request.
 * `priority` (default: 'e'): The priority level of the request, can be 'a', 'b', 'c', 'd', or 'e'.
 * `maxBytes`: The maximum byte size for the request.
-* `excludeDownloadForContentTypes` (default: []): An array of MIME types for which download should be skipped.
 * `path` (default: undefined): A file path to save the response streaming data to (full path).
 * `withCredentials` (default: undefined or { origin: '*', maxAge: 2592000, methods: 'OPTIONS, POST, GET' }): The credentials for Access-Control request headers.
 * `referer` (default: undefined): The referer URL. If specified and the target URL is relative, the target URL will be built from this referer.
 * `headers` (default: {}): The request headers.
-* `onPause`: A function to execute when the request is paused.
-* `onResume`: A function to execute when the request resumes.
+* Hooks - each hook is a function which getting two parameters:request and response instance
+  * `onPause`: A function to execute when the request is paused.
+  * `onResume`: A function to execute when the request resumes.
+  * `onResponse`: A function to execute after headers has recieved
 * follow-redirects options (https://www.npmjs.com/package/follow-redirects for more details)
   * `followRedirects` (default: true) – whether redirects should be followed.
   * `maxRedirects` (default: 21) – sets the maximum number of allowed redirects; if exceeded, an error will be emitted.
@@ -83,7 +99,31 @@ The options object can contain the following properties:
   * `trackRedirects` (default: false) – whether to store the redirected response details into the redirects array on the response object.
 
 
-# Relative url and referer
+## Using hooks
+
+`Request` has 3 hooks: `onPause`,`onResponse`,`onResume`.
+Each hook getting `request` and `responseObj` as parameters. 
+The `onPause` and `onResume` hooks used only then download limiter defined (then `maxBytes` defined in options). 
+
+The `onResponse` hook, executed right before downloading or streaming data and allows you to read headers and to prevent download. 
+
+Example:
+```js
+let imageNotDownloaded = false
+await Request.fetch('http://example.com/some-image.jpg',{
+  onResponse:(req,resObj) => {
+    if(resObj.response.size > 1024*1024*5) {
+      resObj.download = false
+      imageNotDownloaded = true
+    }
+  }
+})
+```
+
+On example above, onResponse hook preventing downloading if file size bigger then 5MB.
+
+
+## Relative url and referer
 In `als-request`, the `referer` parameter serves a more specific purpose compared to its typical usage in HTTP. When constructing a URL that is not an absolute URL (i.e., it doesn't start with 'http'), the `referer` is used as the base URL.
 
 When using the `Request` constructor, if the original `url` does not start with 'http', `referer` is used to construct a full URL. This is especially useful when you have relative URLs and you want to resolve them against a base URL.
@@ -135,14 +175,16 @@ The resolved response object contains the following properties:
 * `error`: Any errors occurred while making the request.
 * `errors`: An array of error objects for each error that occurred while making the request
   * Error handling described further.
-* `type`: The MIME type of the response.
+* `type`: The MIME type of the response (getter)
 * `loadTime`: Time it took to load the response.
 * `waitTime`: Time spent waiting while the response was paused.
 * `_redirects`: An array of URLs that the request was redirected through.
 * `json`: A getter method that tries to parse data as JSON and return the result
-* `size`: Size of data in bytes.
+* `size`: Size of data in bytes (getter).
+  * checks size in headers. If size in headers not available return number of downloaded chunks.
 * `client`:The HTTP client instance.
 * `socket`:The network socket instance.
+* `urlObj`: url parsed object
 
 
 ## Limiting Download Speed

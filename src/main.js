@@ -2,14 +2,14 @@ let Request = require('./request/request')
 
 Request.fetch = function(url,options={},method) {
    if(method) options.method = method
-   const keys = ['maxBytes','excludeDownloadForContentTypes','path','withCredentials', 'referer','headers', 'onPause','onResume']
-   const {maxBytes,excludeDownloadForContentTypes=[],path,withCredentials, referer,headers={}, onPause,onResume} = options
+   const keys = ['maxBytes','path','withCredentials', 'referer','headers', 'onPause','onResume','onResponse']
+   const {maxBytes,path,withCredentials, referer,headers={}, onPause,onResume,onResponse} = options
    if(maxBytes) Request.limitSpeed(maxBytes)
-   Request.excludeDownloadForContentTypes = excludeDownloadForContentTypes
    const obj = new Request(url,referer)
    obj.setHeaders(headers)
-   if(typeof onPause == 'function') Request.onPause = onPause
-   if(typeof onResume == 'function') Request.onResume = onResume
+   if(typeof onPause == 'function') obj.onPause = onPause
+   if(typeof onResume == 'function') obj.onResume = onResume
+   if(typeof onResponse == 'function') obj.onResponse = onResponse
    if(withCredentials) obj.withCredentials(withCredentials)
    keys.forEach(key => { // separate left options from extracted and run request(options)
       delete options[key]

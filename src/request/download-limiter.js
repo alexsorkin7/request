@@ -25,19 +25,14 @@ class DownloadLimiter {
    check() {
       if(this.downloads.length === 0) return this.stopChecking();
       const { currentSize, maxObjIndex } = this.getSizes()
-      if (currentSize >= this.maxBytes) {
-         this.downloads.sort((a, b) => { // sort downloads array by priority
-            const ap = a.request.options.priority,bp = b.request.options.priority
-            return this.priorities[bp] - this.priorities[ap]
-         });
-         this.downloads[maxObjIndex].pause()
-      } else {
+      if(currentSize >= this.maxBytes) this.downloads[maxObjIndex].pause()
+      else {
          this.downloads.sort((a, b) => { // sort downloads array by priority
             const ap = a.request.options.priority,bp = b.request.options.priority
             return this.priorities[ap] - this.priorities[bp]
          });
          for (let download of this.downloads) {
-            if (download.paused) {
+            if(download.paused) {
                download.resume()
                break
             }

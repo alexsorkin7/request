@@ -1,5 +1,6 @@
 const {URL} = require('url')
 function isValidUrl(url,referer) {
+   url = encodeURI(url)
    if(!url || /^(\#|mailto\:|tel\:)/.test(url)) return false;
    if(!url.startsWith('http') && referer) {
       let {origin,pathname} = new URL(referer);
@@ -10,8 +11,8 @@ function isValidUrl(url,referer) {
       } else url = url.startsWith('/') ? origin + url : origin + '/' + url;  // If url is relative but the pathname is '/', and url does not start with '/'
    }
    try {
-      new URL(url);
-      return url;
+      const urlObj = new URL(url);
+      return {url,urlObj};
    } catch {return false;}
 }
 

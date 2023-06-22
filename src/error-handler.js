@@ -8,11 +8,12 @@ const errors = {
    REQMAXDATA:'Maximum url length achived. Some data key not included',
    REQJSON:'data is not vaid json',
    REQSTREAM:'Something wrong with streaming',
-   INVALIDPROTOCOL:'Protocol not supported'
+   INVALIDPROTOCOL:'Protocol not supported',
+   REQERR:'Error in request'
 }
 
 module.exports = function(errorData={}) {
-   let {msg='',code='NOCODE',url,err=null,details={}} = errorData
+   let {msg='',code='NOCODE',url,err=null,details={},error} = errorData
    if(msg == '' && errors[code]) msg = errors[code]
    return {errorCode: code, errorMessage: msg,url,details,err,date:Date.now()}
 }

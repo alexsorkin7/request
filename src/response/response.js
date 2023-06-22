@@ -1,36 +1,16 @@
 const mime = require('./mime')
 const canResponse = require('./can-response')
 const { createWriteStream } = require('fs')
-const size = require('./size')
 const jsonGetter = require('./json-getter')
 
 class Response {
-   constructor(request,dl,excludeDownloadForContentTypes) {
+   constructor(request,dl) {
       this.request = request
-      this.excludeDownloadForContentTypes = excludeDownloadForContentTypes
       this.dl = dl
       this.promise = new Promise((resolve, reject) => {
          this.resolve = resolve
          this.reject = reject
       })
-   }
-   
-   prepareResponse() {
-      const {options,res,req,url} = this.request
-      const {initTime} = options
-      let { rawHeaders, method, headers, client, socket, responseUrl, statusCode } = res
-      this.response = {
-         status: statusCode, rawHeaders, responseUrl, headers, 
-         client, socket,
-         idleTime: parseInt(Date.now() - initTime),
-         error: null, errors: this.request.errors,_redirects:[] 
-      }
-      this.response.type = mime(headers,url)
-      if(this.response.type) this.dontDownload = this.excludeDownloadForContentTypes.includes(this.response.type);
-      req.on('error', error => this.reject(error))
-      req.on('redirect', (res, options) => {
-         this.response._redirects.push(`${options.hostname}${options.path}`)
-      });
    }
 
    stream(path) {
@@ -38,7 +18,7 @@ class Response {
          let stream = createWriteStream(path)
          this.request.res.pipe(stream)
          stream.on('finish', () => this._end())
-         stream.on('error', error => this.reject(error))
+         stream.on('error', error => this.reject({error,errors:this.request.errors}))
       })
    }
 
@@ -53,6 +33,68 @@ class Response {
       })
    }
   
+   execResponse(fn) {
+      const {url,req,onResponse} = this.request
+      if(!canResponse(req,this.request.requester,this.processing,url,this.request.errors)) 
+         return {errors:this.request.errors,error:null}
+      this.processing = true
+      req.on('response', () => {
+         this.prepareResponse()
+         this.download = true
+         if(typeof onResponse === 'function') onResponse(this.request,this)
+         this.request.res.on('error', error => this.reject(error));
+         this.chunks = [];
+         if(this.download) {
+            this.loadTime = Date.now()
+            this.waitTime = 0
+            if(this.dl) this.dl.startChecking(this)
+            this.request.res.on('data', chunk => this.chunks.push(chunk));
+            fn()
+         } else this.resolve(this.response)
+      });
+      return this.promise;
+   }
+
+   prepareResponse() {
+      const {options,res,req,url,urlObj,errors} = this.request
+      const {initTime} = options
+      let { rawHeaders, method, headers, client, socket, responseUrl, statusCode } = res
+      this.response = {
+         status: statusCode, rawHeaders, responseUrl, headers, 
+         client, socket,urlObj,
+         idleTime: parseInt(Date.now() - initTime),
+         error: null, errors,_redirects:[] 
+      }
+      this.addGetters(headers,url,this)
+      req.on('error', error => this.reject(error))
+      req.on('redirect', (res, options) => {
+         this.response._redirects.push(`${options.hostname}${options.path}`)
+      });
+   }
+
+   addGetters(headers,url,self) {
+      Object.defineProperty(this.response, 'type', {get() {return mime(headers,url)}});
+      Object.defineProperty(this.response, 'size', {
+         get() {
+            if(headers) {
+               if(headers['content-length']) return headers['content-length']
+            }
+            return self.chunks.length
+         }
+      });
+   }
+
+   _end() {
+      const {loadTime,waitTime=0} = this
+      if(loadTime) {
+         this.loadTime = Date.now() - loadTime - waitTime
+         this.response.loadTime = parseInt(this.loadTime)
+         this.response.waitTime = waitTime
+         if(this.dl) this.dl.remove(this)
+      }
+      this.resolve(this.response)
+   }
+
    pause() {
       const {onPause} = this.request
       if(typeof onPause == 'function') onPause(this.request,this)
@@ -70,37 +112,6 @@ class Response {
          this.waitTime += Date.now() - this.waitStartTime
          this.waitStartTime = null; // reset waitStartTim
       }
-   }
-
-   execResponse(fn) {
-      const {url,req} = this.request
-      if(!canResponse(req,this.request.requester,this.processing,url,this.request.errors)) 
-         return {errors:this.request.errors}
-      this.processing = true
-      req.on('response', () => {
-         this.prepareResponse()
-         this.loadTime = Date.now()
-         this.waitTime = 0
-         this.chunks = [];
-         if(this.dontDownload) return this._end()
-         if(this.dl) this.dl.startChecking(this)
-         this.request.res.on('data', chunk => this.chunks.push(chunk));
-         fn()
-         this.request.res.on('error', error => this.reject(error));
-      });
-      return this.promise;
-   }
-
-   _end() {
-      const {loadTime,waitTime=0} = this
-      if(loadTime) {
-         this.loadTime = Date.now() - loadTime - waitTime
-         this.response.loadTime = parseInt(this.loadTime)
-         this.response.waitTime = waitTime
-         if(this.dl) this.dl.remove(this)
-      }
-      this.response.size = size(this.response) || this.chunks.length
-      this.resolve(this.response)
    }
 }
 

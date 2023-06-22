@@ -116,9 +116,33 @@ describe('static methods', () => {
         expect(response.json).sameAs({ message: 'This is a POST JSON route', data: { key: 'value' } })
     })
 
-    it('GET strem image',async () => {
-        const response = await Request.get(`${url}image`,{path:join(__dirname,'imgs','downloaded_image.jpg')})
+    it('GET stream image',async () => {
+        const path = join(__dirname,'imgs','downloaded_image.jpg')
+        if(fs.existsSync(path)) fs.unlinkSync(path)
+        let responseHookWorks = false
+        let size
+        let type
+        const onResponse = (req,resObj) => {
+            responseHookWorks = true
+            type = resObj.response.type
+            size = resObj.response.size
+        }
+        const response = await Request.get(`${url}image`,{path,onResponse})
         expect(response.status).equalTo(200)
+        expect(fs.existsSync(path)).equalTo(true)
+        expect(size).equalTo('2648')
+        expect(type).equalTo('image/jpeg')
+        expect(responseHookWorks).equalTo(true)
+        if(fs.existsSync(path)) fs.unlinkSync(path)
+    })
+
+    it('Not downloading',async () => {
+        const onResponse = (req,resObj) => {
+            resObj.download = false
+        }
+        const response = await Request.get(url,{data:{key:'value'},onResponse})
+        expect(response.data).isNot().defined()
+        expect(response.json).isNot().defined()
     })
 
     it('POST form-data',async () => {

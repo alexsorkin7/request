@@ -3,23 +3,25 @@ const withCredentials = require('./with-credentials')
 const getReqData = require('./req-data')
 const Response = require('../response/response')
 const DownloadLimiter = require('./download-limiter')
+const errorHandler = require('../error-handler')
 
 class Request {
    static limitSpeed(maxBytes) {
       if(isNaN(Number(maxBytes))) console.error('maxBytes parameter has to be number')
       else this.dl = new DownloadLimiter(maxBytes)
    }
-   static excludeDownloadForContentTypes = []
    constructor(originalUrl,referer) {
       this.errors = []
       this.referer = referer
-      let {requester,url,options} = prepareRequest(originalUrl,referer,this.errors)
+      let {requester,url,options,urlObj} = prepareRequest(originalUrl,referer,this.errors)
       this.requester = requester
       this.url = url
+      this.urlObj = urlObj
       this.options = options
       this.options.initTime = Date.now()
       this.onPause
       this.onResume
+      this.onResponse
    }
 
    withCredentials(options = {}) {
@@ -40,8 +42,8 @@ class Request {
          this.res = res
       })
       this._afterRequest()
-      let {excludeDownloadForContentTypes,dl} = this.constructor
-      this._response = new Response(this,dl,excludeDownloadForContentTypes)
+      let {dl} = this.constructor
+      this._response = new Response(this,dl)
       return this
    }
 
@@ -63,6 +65,7 @@ class Request {
          this.req.write(data)
          this.req.end()
       } else this.req.end()
+      this.req.on('error', error => this.errors.push(errorHandler({code:'REQERR',url:this.url,err:error})))
    }
 
    response() {return this._response.$response()}

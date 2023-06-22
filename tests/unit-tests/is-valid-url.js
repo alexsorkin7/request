@@ -18,42 +18,42 @@ describe('isValidUrl tests',() => {
 
    it('Should return the original url for valid http url',() => {
       const url = 'http://example.com';
-      expect(isValidUrl(url)).is('valid url').equalTo(url)
+      expect(isValidUrl(url).url).is('valid url').equalTo(url)
    })
 
    it('Should return the original url for valid https url',() => {
       const url = 'https://example.com';
-      expect(isValidUrl(url)).is('valid url').equalTo(url)
+      expect(isValidUrl(url).url).is('valid url').equalTo(url)
    })
 
    it('Should handle url relative to the referer origin',() => {
       const url = '/path';
       const referer = 'http://example.com';
-      expect(isValidUrl(url, referer)).is('valid url').equalTo(referer + url)
+      expect(isValidUrl(url, referer).url).is('valid url').equalTo(referer + url)
    })
 
    it('Should handle url relative to the referer pathname',() => {
       const url = 'relative-path';
       const referer = 'http://example.com/path';
-      expect(isValidUrl(url, referer)).is('valid url').equalTo(referer + '/' + url)
+      expect(isValidUrl(url, referer).url).is('valid url').equalTo(referer + '/' + url)
    })
 
    it('Should handle url relative to the referer pathname with trailing slash',() => {
       const url = 'relative-path';
       const referer = 'http://example.com/path/';
-      expect(isValidUrl(url, referer)).is('valid url').equalTo(referer + url)
+      expect(isValidUrl(url, referer).url).is('valid url').equalTo(referer + url)
    })
 
    it('Should handle url relative to the referer when pathname is "/"',() => {
       const url = 'relative-path';
       const referer = 'http://example.com/';
-      expect(isValidUrl(url, referer)).is('valid url').equalTo(referer + url)
+      expect(isValidUrl(url, referer).url).is('valid url').equalTo(referer + url)
    })
-
+   
    it('Should handle url relative to the referer when pathname is "/" and url starts with "/"',() => {
       const url = '/relative-path';
       const referer = 'http://example.com/';
-      expect(isValidUrl(url, referer)).is('valid url').equalTo(referer + url.slice(1))
+      expect(isValidUrl(url, referer).url).is('valid url').equalTo(referer + url.slice(1))
    })
 });
 
