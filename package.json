@@ -1,6 +1,6 @@
 {
   "name": "als-request",
-  "version": "1.0.0-beta.2",
+  "version": "1.0.0-beta.3",
   "description": "versatile HTTP client offering enhanced features for Node.js with functionality for speed limitation with events, CORS management, stream support, automatic data preparation, error and response handling, and more",
   "main": "index.js",
   "engines": {

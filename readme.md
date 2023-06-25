@@ -4,6 +4,10 @@
 
 > The package has tested and all should work fine. Please report any bugs or issues you encounter.
 
+## New in beta.3
+* fixed resolving request without response
+* request withour response has different respone to return
+
 
 ## New in beta.2
 * response object changes:
@@ -186,6 +190,15 @@ The resolved response object contains the following properties:
 * `socket`:The network socket instance.
 * `urlObj`: url parsed object
 
+
+If request return error, response will include:
+* `idleTime`
+* `error` - only error code
+* `url`
+* `errors` - array. includes error from request inside err
+* `noResponse`
+* `_redirects`
+* `urlObj`
 
 ## Limiting Download Speed
 The `als-request` package includes a built-in module for limiting the download speed of response data. Use `Request.limitSpeed(maxBytes)` to specify the maximum number of bytes that can be downloaded concurrently. The `maxBytes` parameter is required and must be a number.

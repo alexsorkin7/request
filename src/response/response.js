@@ -2,6 +2,7 @@ const mime = require('./mime')
 const canResponse = require('./can-response')
 const { createWriteStream } = require('fs')
 const jsonGetter = require('./json-getter')
+const errorHandler = require('../error-handler')
 
 class Response {
    constructor(request,dl) {
@@ -34,12 +35,22 @@ class Response {
    }
   
    execResponse(fn) {
-      const {url,req,onResponse} = this.request
-      if(!canResponse(req,this.request.requester,this.processing,url,this.request.errors)) 
-         return {errors:this.request.errors,error:null}
+      const {url,req,onResponse,urlObj,errors,requester,options} = this.request
+      
+      if(!canResponse(req,requester,this.processing,url,errors)) 
+         return {errors,error:null}
       this.processing = true
+      const _redirects = []
+      req.on('redirect', (res, options) => {
+         _redirects.push(`${options.hostname}${options.path}`)
+      });
+      req.on('error', error => {
+         this.request.errors.push(errorHandler({code:'REQERR',url:this.url,err:error}))
+         const idleTime = parseInt(Date.now() - options.initTime)
+         this.reject({idleTime,error:'REQERR',url,errors,noResponse:true,_redirects,urlObj})
+      })
       req.on('response', () => {
-         this.prepareResponse()
+         this.prepareResponse(_redirects)
          this.download = true
          if(typeof onResponse === 'function') onResponse(this.request,this)
          this.request.res.on('error', error => this.reject(error));
@@ -55,21 +66,17 @@ class Response {
       return this.promise;
    }
 
-   prepareResponse() {
+   prepareResponse(_redirects) {
       const {options,res,req,url,urlObj,errors} = this.request
       const {initTime} = options
       let { rawHeaders, method, headers, client, socket, responseUrl, statusCode } = res
       this.response = {
          status: statusCode, rawHeaders, responseUrl, headers, 
-         client, socket,urlObj,
+         client, socket,urlObj,_redirects,
          idleTime: parseInt(Date.now() - initTime),
          error: null, errors,_redirects:[] 
       }
       this.addGetters(headers,url,this)
-      req.on('error', error => this.reject(error))
-      req.on('redirect', (res, options) => {
-         this.response._redirects.push(`${options.hostname}${options.path}`)
-      });
    }
 
    addGetters(headers,url,self) {

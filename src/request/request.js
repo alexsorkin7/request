@@ -65,7 +65,6 @@ class Request {
          this.req.write(data)
          this.req.end()
       } else this.req.end()
-      this.req.on('error', error => this.errors.push(errorHandler({code:'REQERR',url:this.url,err:error})))
    }
 
    response() {return this._response.$response()}
